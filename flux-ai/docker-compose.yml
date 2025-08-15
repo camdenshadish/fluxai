@@ -1,0 +1,50 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: fluxai-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: flux
+      POSTGRES_PASSWORD: flux
+      POSTGRES_DB: flux
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flux"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    container_name: fluxai-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://flux:flux@postgres:5432/flux?schema=public
+      JWT_SECRET: ${JWT_SECRET:-changeme}
+      ENCRYPTION_KEY_HEX: ${ENCRYPTION_KEY_HEX:-0000000000000000000000000000000000000000000000000000000000000000}
+      PORT: 4000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "4000:4000"
+
+  frontend:
+    build: ./frontend
+    container_name: fluxai-frontend
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+
+

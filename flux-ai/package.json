@@ -1,0 +1,23 @@
+{
+  "name": "flux-ai",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend",
+    "agents",
+    "nodes",
+    "integrations",
+    "utils"
+  ],
+  "scripts": {
+    "dev": "concurrently -n backend,frontend -c blue,green \"npm --prefix backend run dev\" \"npm --prefix frontend run dev\"",
+    "build": "npm --prefix backend run build && npm --prefix frontend run build",
+    "start": "concurrently -n backend,frontend -c blue,green \"npm --prefix backend start\" \"npm --prefix frontend start\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
+
+

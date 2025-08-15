@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String
+  name          String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  agents        Agent[]
+}
+
+model Agent {
+  id            String     @id @default(cuid())
+  ownerId       String
+  name          String
+  description   String?
+  executionMode String     @default("native")
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  workflows     Workflow[]
+  credentials   Credential[]
+  owner         User       @relation(fields: [ownerId], references: [id])
+}
+
+model Workflow {
+  id          String   @id @default(cuid())
+  agentId     String
+  name        String
+  graph       Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  agent       Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  triggers    Trigger[]
+  executions  Execution[]
+}
+
+model Credential {
+  id              String   @id @default(cuid())
+  agentId         String
+  provider        String
+  encryptedValue  Bytes
+  iv              Bytes
+  createdAt       DateTime @default(now())
+  agent           Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+}
+
+model Execution {
+  id         String   @id @default(cuid())
+  workflowId String
+  status     String
+  logs       Json
+  createdAt  DateTime @default(now())
+  workflow   Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+}
+
+model Trigger {
+  id          String   @id @default(cuid())
+  workflowId  String
+  type        String
+  config      Json
+  secret      String   @unique
+  createdAt   DateTime @default(now())
+  workflow    Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+}
+
+model MarketplaceItem {
+  id          String   @id @default(cuid())
+  ownerId     String
+  kind        String
+  name        String
+  description String?
+  payload     Json
+  priceCents  Int?
+  createdAt   DateTime @default(now())
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  agentId   String
+  role      String
+  content   String
+  createdAt DateTime @default(now())
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+}
+
+model NodeUsage {
+  id         String   @id @default(cuid())
+  workflowId String
+  nodeId     String
+  count      Int      @default(0)
+  workflow   Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  @@unique([workflowId, nodeId])
+}
+
+
